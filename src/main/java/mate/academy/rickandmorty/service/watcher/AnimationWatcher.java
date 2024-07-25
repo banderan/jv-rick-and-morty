@@ -1,5 +1,6 @@
 package mate.academy.rickandmorty.service.watcher;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -7,8 +8,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import mate.academy.rickandmorty.dto.external.CharacterResponseDto;
 import mate.academy.rickandmorty.dto.external.InfoResponseDto;
@@ -21,12 +20,12 @@ import org.springframework.stereotype.Component;
 public class AnimationWatcher {
     private final ObjectMapper objectMapper;
     @Value("${mate.academy.animation.outer.db}")
-    private String BASE_URL;
+    private String baseUrl;
 
     public List<CharacterResponseDto> getCharacter() {
         HttpClient httpClient = HttpClient.newHttpClient();
         List<CharacterResponseDto> allCharacters = new ArrayList<>();
-        String url = BASE_URL;
+        String url = baseUrl;
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(url))

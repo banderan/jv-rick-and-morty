@@ -1,9 +1,8 @@
 package mate.academy.rickandmorty.dto.external;
 
-public record InfoPages (
+public record InfoPages(
         int count,
         int pages,
         String next,
-        String prev
-) {
+        String prev) {
 }
