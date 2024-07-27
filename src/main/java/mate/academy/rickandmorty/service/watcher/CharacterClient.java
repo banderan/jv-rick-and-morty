@@ -11,34 +11,44 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import mate.academy.rickandmorty.dto.external.CharacterResponseDto;
 import mate.academy.rickandmorty.dto.external.InfoResponseDto;
-import mate.academy.rickandmorty.exception.AnimationException;
+import mate.academy.rickandmorty.exception.CharacterException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component
-public class AnimationWatcher {
+public class CharacterClient {
     private final ObjectMapper objectMapper;
     @Value("${mate.academy.animation.outer.db}")
     private String baseUrl;
 
-    public List<CharacterResponseDto> getCharacter() {
+    public List<CharacterResponseDto> getListOfAllCharacters() {
         HttpClient httpClient = HttpClient.newHttpClient();
+
         List<CharacterResponseDto> allCharacters = new ArrayList<>();
-        String url = baseUrl;
+
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
-                .uri(URI.create(url))
+                .uri(URI.create(baseUrl))
                 .build();
-        HttpResponse<String> response = null;
-        InfoResponseDto infoResponseDto = null;
-        try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            infoResponseDto = objectMapper.readValue(response.body(), InfoResponseDto.class);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        String nextUrl = infoResponseDto.getInfo().next();
+
+        String nextUrl = getInfoResponseDto(httpClient, request)
+                .getInfo()
+                .next();
+
+        return getRestOfCharactersOnOtherPages(
+                nextUrl,
+                httpClient,
+                allCharacters);
+    }
+
+    private List<CharacterResponseDto> getRestOfCharactersOnOtherPages(
+            String nextUrl,
+            HttpClient httpClient,
+            List<CharacterResponseDto> allCharacters) {
+
+        HttpResponse<String> response;
+        InfoResponseDto infoResponseDto;
 
         try {
             while (nextUrl != null) {
@@ -55,8 +65,22 @@ public class AnimationWatcher {
             }
             return allCharacters;
         } catch (IOException | InterruptedException e) {
-            throw new AnimationException(
-                    "Error while waiting for character", e);
+            throw new CharacterException(
+                    "Error in taking character from other pages", e);
         }
+    }
+
+    private InfoResponseDto getInfoResponseDto(HttpClient httpClient, HttpRequest request) {
+        HttpResponse<String> response;
+        InfoResponseDto infoResponseDto;
+
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            infoResponseDto = objectMapper.readValue(response.body(), InfoResponseDto.class);
+        } catch (IOException | InterruptedException e) {
+            throw new CharacterException("Something go wrong when u try "
+                    + "take character from first page", e);
+        }
+        return infoResponseDto;
     }
 }
