@@ -18,11 +18,19 @@ public class CharacterServiceImpl implements CharacterService {
     private final CharacterRepository characterRepository;
     private final CharacterClient characterClient;
     private final CharacterMapper characterMapper;
+    private final Random random = new Random();
     private List<CharacterResponseDto> characterList;
 
     @PostConstruct
     public void init() {
-        characterList = characterClient.getListOfAllCharacters();
+        try {
+            characterList = characterClient.getListOfAllCharacters();
+            if (characterList == null || characterList.isEmpty()) {
+                throw new IllegalStateException("Character list could not be loaded or is empty.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize character list", e);
+        }
     }
 
     @Override
@@ -32,7 +40,6 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     private CharacterResponseDto takeRandomCharacter() {
-        Random random = new Random();
         int randomId = random.nextInt(characterList.size());
         return characterList.get(randomId);
     }
